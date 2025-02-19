@@ -11,14 +11,14 @@ from app.db.enums import TaskStatus
 from app.settings import settings
 
 
-TASK_FUNCTIONS: dict[str, Callable[dict[str, int | str]]] = {
-    "addition": task_functions.task_type1,
-    "multiplication": task_functions.task_type2,
-    "reverse": task_functions.task_type3,
+TASK_FUNCTIONS: dict[str, Callable[Any, Any]] = {
+    "addition": task_functions.add,
+    "multiplication": task_functions.mult,
+    "reverse": task_functions.rev,
 }
 
 
-async def process_message(message: IncomingMessage):
+async def process_message(message: IncomingMessage) -> None:
     async with message.process():
         data = json.loads(message.body)
         task_id = data.get("task_id")
