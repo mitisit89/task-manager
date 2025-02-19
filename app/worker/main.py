@@ -33,12 +33,14 @@ async def process_message(message: IncomingMessage) -> None:
                 if not fn:
                     raise ValueError("Unknown task type")
                 print(task.payload)
-                result = await fn(json.loads(task.payload))
+                result = await fn(task_id, json.loads(task.payload))
                 print("upal")
-                task.result = json.dumps(result)
-                task.status = TaskStatus.COMPLETED
                 # cache = await redis.from_url("redis://redis:6379")
                 # await cache.set(f"task:{task_id}", json.dumps(result))
+                task.result = json.dumps(result)
+                task.status = TaskStatus.COMPLETED
+            except asyncio.CancelledError as ce:
+                task.error = str(ce)
             except Exception as e:
                 task.error = str(e) + " --error in update task"
                 task.status = TaskStatus.FAILED
