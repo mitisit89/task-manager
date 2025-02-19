@@ -11,9 +11,9 @@ from app.settings import settings
 
 
 TASK_FUNCTIONS: dict[str, Callable[Any, Any]] = {
-    "addition": task_functions.add,
-    "multiplication": task_functions.mult,
-    "reverse": task_functions.rev,
+    "add": task_functions.add,
+    "mult": task_functions.mult,
+    "rev": task_functions.rev,
 }
 
 
@@ -27,17 +27,20 @@ async def process_message(message: IncomingMessage) -> None:
                 return
             task.status = TaskStatus.IN_PROGRESS
             await session.commit()
+            await session.refresh(task)
             try:
                 fn = TASK_FUNCTIONS.get(task.task_type)
                 if not fn:
                     raise ValueError("Unknown task type")
-                result = await fn(task.params)
-                task.result = result
+                print(task.payload)
+                result = await fn(json.loads(task.payload))
+                print("upal")
+                task.result = json.dumps(result)
                 task.status = TaskStatus.COMPLETED
-                cache = await redis.from_url("redis://redis:6379")
-                await cache.set(f"task:{task_id}", json.dumps(result))
+                # cache = await redis.from_url("redis://redis:6379")
+                # await cache.set(f"task:{task_id}", json.dumps(result))
             except Exception as e:
-                task.error = str(e)
+                task.error = str(e) + " --error in update task"
                 task.status = TaskStatus.FAILED
             finally:
                 await session.commit()

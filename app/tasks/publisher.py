@@ -1,11 +1,9 @@
+import aio_pika
+from app.settings import settings
 import json
 
-import aio_pika
 
-from app.settings import settings
-
-
-async def publish_task(task_id: int):
+async def publish_task(task_id: int | None):
     connection = await aio_pika.connect_robust(settings.RABBITMQ_URL)
     async with connection:
         channel = await connection.channel()

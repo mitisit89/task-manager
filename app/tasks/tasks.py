@@ -4,7 +4,7 @@ import asyncio
 async def add(params: dict[str, int]) -> dict[str, int]:
     a = params.get("a", 0)
     b = params.get("b", 0)
-    await asyncio.sleep(60)
+    await asyncio.sleep(10)
     return {"result": a + b}
 
 
