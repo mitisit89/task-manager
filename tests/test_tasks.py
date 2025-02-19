@@ -1,15 +1,20 @@
-from fastapi.testclient import TestClient
-from app.main import app
+import pytest
+from httpx import AsyncClient
+from main import app
 
-client = TestClient(app)
 
-
-def test_create_task():
-    response = client.post("/tasks/", json={"task_type": "type_a", "data": "some data"})
+@pytest.mark.asyncio
+async def test_create_task():
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        response = await ac.post("/tasks", json={"task_type": "add", "payload": {"a": 2, "b": 3}})
     assert response.status_code == 200
-    assert "task_id" in response.json()
+    data = response.json()
+    assert data["task_type"] == "addition"
+    assert data["status"] == "pending"
 
 
-def test_get_task_status():
-    response = client.get("/tasks/1/status")
-    assert response.status_code == 200
+@pytest.mark.asyncio
+async def test_get_nonexistent_task():
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        response = await ac.get("/tasks/9999")
+    assert response.status_code == 404
