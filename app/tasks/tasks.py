@@ -9,7 +9,7 @@ async def check_cancellation(task_id: int):
     async with async_session() as session:
         task = await session.get(Task, task_id)
         if task and task.status == TaskStatus.CANCELED:
-            raise asyncio.CancelledError("Задача была отменена")
+            raise asyncio.CancelledError("Task was canceled")
 
 
 async def add(task_id, params: dict[str, int]) -> dict[str, int]:
