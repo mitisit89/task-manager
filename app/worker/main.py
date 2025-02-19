@@ -2,8 +2,7 @@ import asyncio
 import json
 from typing import Callable, Any
 from aio_pika import connect_robust, IncomingMessage
-import aioredis
-
+import redis.asyncio as redis
 from app.db.connection import async_session
 from app.db.models import Task
 from app.tasks import tasks as task_functions
@@ -35,8 +34,8 @@ async def process_message(message: IncomingMessage) -> None:
                 result = await fn(task.params)
                 task.result = result
                 task.status = TaskStatus.COMPLETED
-                redis = await aioredis.from_url("redis://redis")
-                await redis.set(f"task:{task_id}", json.dumps(result))
+                cache = await redis.from_url("redis://redis:6379")
+                await cache.set(f"task:{task_id}", json.dumps(result))
             except Exception as e:
                 task.error = str(e)
                 task.status = TaskStatus.FAILED
@@ -45,6 +44,9 @@ async def process_message(message: IncomingMessage) -> None:
 
 
 async def main_worker():
+    print("Starting worker...")
+    print(settings.RABBITMQ_URL)
+    print(settings.TASK_QUEUE)
     connection = await connect_robust(settings.RABBITMQ_URL)
     channel = await connection.channel()
     queue = await channel.declare_queue(settings.TASK_QUEUE, durable=True)
