@@ -1,12 +1,15 @@
-from fastapi import APIRouter, HTTPException, Depends
-from app.db.models import Task
-from app.db.connection import async_session
-from app.tasks.publisher import publish_task
-from app.db.shemas import TaskResponse, TaskCreate, TaskUpdate, SuccessResponse
-from sqlalchemy import select
-from fastapi.responses import HTMLResponse, Response
 import asyncio
 import json
+
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import HTMLResponse
+from sqlalchemy import select
+
+from app.db.connection import async_session
+from app.db.enums import TaskStatus
+from app.db.models import Task
+from app.db.shemas import SuccessResponse, TaskCreate, TaskResponse, TaskUpdate
+from app.tasks.publisher import publish_task
 
 router = APIRouter()
 
@@ -63,18 +66,19 @@ async def update_task(task_id: int, task_update: TaskUpdate):
         return task
 
 
-@router.post("/tasks/{task_id}/cancel", response_model=TaskResponse)
+@router.post("/tasks/{task_id}/cancel", response_model=SuccessResponse)
 async def cancel_task(task_id: int):
     async with async_session() as session:
         task = await session.get(Task, task_id)
+        print(task.status)
         if not task:
             raise HTTPException(status_code=404, detail="Task not found")
-        if task.status in ["completed", "failed"]:
+        if task.status in (TaskStatus.COMPLETED, TaskStatus.FAILED):
             raise HTTPException(status_code=400, detail="Cannot cancel completed/failed task")
-        task.status = "cancelled"
+        task.status = TaskStatus.CANCELED
         await session.commit()
         await session.refresh(task)
-        return task
+        return SuccessResponse(status="success")
 
 
 @router.get("/metrics", response_model=None)
@@ -82,9 +86,15 @@ async def get_metrics(session=Depends(async_session)):
     all_tasks_result = await session.execute(select(Task))
     tasks = all_tasks_result.scalars().all()
     total = len(tasks)
-    errors = len([t for t in tasks if t.status == "failed"])
-    completed_tasks = [t for t in tasks if t.status == "completed"]
-    return {"total_tasks": total, "failed_tasks": errors}
+    errors = len([t for t in tasks if t.status == TaskStatus.FAILED])
+    completed_tasks = len([t for t in tasks if t.status == TaskStatus.COMPLETED])
+    cancelled_tasks = len([t for t in tasks if t.status == TaskStatus.CANCELED])
+    return {
+        "total_tasks": total,
+        "failed_tasks": errors,
+        "completed_tasks": completed_tasks,
+        "cancelled_tasks": cancelled_tasks,
+    }
 
 
 @router.get("/dashboard", response_class=HTMLResponse)
