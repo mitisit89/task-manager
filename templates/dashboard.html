@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Дашборд задач</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+    <style>
+      .dashboard {
+          margin: 20px;
+      }
+      .metric {
+          margin-bottom: 20px;
+      }
+    </style>
+</head>
+<body>
+    <section class="section dashboard">
+        <div class="container">
+            <h1 class="title">Дашборд задач</h1>
+            <div class="box">
+                <h2 class="subtitle">Метрики</h2>
+                <div class="columns">
+                    <div class="column">
+                        <strong>Всего задач:</strong> {{ metrics.total_tasks }}
+                    </div>
+                    <div class="column">
+                        <strong>Ошибок:</strong> {{ metrics.failed_tasks }}
+                    </div>
+                </div>
+            </div>
+        </div>
+ <div class="box">
+                <h2 class="subtitle">Последние задачи</h2>
+                <table class="table is-fullwidth is-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Тип</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in tasks %}
+                        <tr>
+                            <td>{{ task.id }}</td>
+                            <td>{{ task.task_type }}</td>
+                            <td>{{ task.status }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+    </section>
+</body>
+</html>
