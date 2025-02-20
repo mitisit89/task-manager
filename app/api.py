@@ -9,7 +9,7 @@ from fastapi.templating import Jinja2Templates
 from app.db.connection import async_session
 from app.db.enums import TaskStatus
 from app.db.models import Task
-from app.db.shemas import SuccessResponse, TaskCreate, TaskResponse, TaskUpdate
+from app.db.shemas import SuccessResponse, TaskCreate, TaskResponse, TaskUpdate, TaskInfo
 from app.tasks.publisher import publish_task
 
 router = APIRouter()
@@ -17,17 +17,21 @@ router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 
-@router.post("/publish-task/", response_model=SuccessResponse, status_code=202)
-async def create_task_async(task: TaskCreate):
+@router.post("/publish-task/", response_model=TaskInfo, status_code=202)
+async def create_task(task: TaskCreate) -> TaskInfo:
+    """
+    avaliable task types: add, multiply, reverse
+    for add and mul task payload must be {"a": int, "b": int}
+    for rev task payload must be {"text": str}
+    """
     try:
         async with async_session() as session:
             new_task = Task(task_type=task.task_type, payload=json.dumps(task.payload), status=TaskStatus.PENDING)
             session.add(new_task)
             await session.commit()
             await session.refresh(new_task)
-            print(new_task.id)
             asyncio.create_task(publish_task(new_task.id))
-            return SuccessResponse(status="success")
+            return TaskInfo(id=new_task.id, status=new_task.status)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -110,22 +114,20 @@ async def daashboard(request: Request):
             tasks = result.scalars().all()
             total = len(tasks)
             errors = len([t for t in tasks if t.status == "failed"])
-            completed_tasks = [t for t in tasks if t.status == "completed"]
+            completed_tasks = [t for t in tasks if t.status == "completed" and t.started_at and t.finished_at]
+            avg_time = None
+            if completed_tasks:
+                times = [(t.finished_at - t.started_at).total_seconds() for t in completed_tasks]
+                avg_time = sum(times) / len(times)
+
             metrics = {
                 "total_tasks": total,
                 "failed_tasks": errors,
+                "avg_execution_time": avg_time,
             }
-            recent_tasks = tasks[-10:]
+            recent_tasks = completed_tasks[-10:]
             return templates.TemplateResponse(
                 request, name="dashboard.html", context={"metrics": metrics, "tasks": recent_tasks}
             )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-# @router.get("/", response_class=HTMLResponse)
-# async def root(request: Request):
-#     return templates.TemplateResponse(
-#         request,
-#         "index.html",
-#     )

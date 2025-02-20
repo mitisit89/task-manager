@@ -12,3 +12,6 @@ class Task(SQLModel, table=True):
     payload: str
     result: str | None = None
     error: str | None = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    started_at: datetime | None = None
+    finished_at: datetime | None = None

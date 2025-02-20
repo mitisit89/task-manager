@@ -1,18 +1,13 @@
-from typing import final
-
-from pydantic import BaseModel, validator, Json
+from pydantic import BaseModel, validator, Json, ConfigDict, with_config
 from typing import Any
 from app.db.enums import TaskStatus, TaskType
-import json
+from datetime import datetime
 
 
 class TaskCreate(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     task_type: TaskType
     payload: dict[str, Any]
-
-    @final
-    class Config:
-        from_attributes = True
 
 
 class TaskUpdate(BaseModel):
@@ -24,14 +19,19 @@ class SuccessResponse(BaseModel):
     status: str
 
 
+class TaskInfo(BaseModel):
+    id: int
+    status: TaskStatus
+
+
 class TaskResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     task_type: TaskType
     status: TaskStatus
     payload: Json[Any]
     result: str | None
     error: str | None
-
-    @final
-    class Config:
-        from_attributes = True
+    created_at: datetime
+    started_at: datetime | None
+    finished_at: datetime | None

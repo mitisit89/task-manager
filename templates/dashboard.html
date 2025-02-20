@@ -28,6 +28,15 @@
                     </div>
                 </div>
             </div>
+<div class="column">
+                        <strong>Среднее время выполнения:</strong> 
+                        {% if metrics.avg_execution_time %}
+                          {{ metrics.avg_execution_time | round(2) }} секунд
+                        {% else %}
+                          N/A
+                        {% endif %}
+                    </div>
+                </div>
         </div>
  <div class="box">
                 <h2 class="subtitle">Последние задачи</h2>
@@ -45,6 +54,7 @@
                             <td>{{ task.id }}</td>
                             <td>{{ task.task_type }}</td>
                             <td>{{ task.status }}</td>
+                            <td>{{task.created_at.strftime('%Y-%m-%d %H:%M:%S')}}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
