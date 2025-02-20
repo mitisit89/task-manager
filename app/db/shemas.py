@@ -1,8 +1,9 @@
 from typing import final
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator, Json
 from typing import Any
 from app.db.enums import TaskStatus, TaskType
+import json
 
 
 class TaskCreate(BaseModel):
@@ -27,9 +28,9 @@ class TaskResponse(BaseModel):
     id: int
     task_type: TaskType
     status: TaskStatus
-    payload: str
-    result: str
-    error: str
+    payload: Json[Any]
+    result: str | None
+    error: str | None
 
     @final
     class Config:

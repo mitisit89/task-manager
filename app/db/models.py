@@ -9,6 +9,6 @@ class Task(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     task_type: TaskType
     status: TaskStatus = Field(default=TaskStatus.PENDING)
-    payload: str | None = None
+    payload: str
     result: str | None = None
     error: str | None = None
