@@ -1,5 +1,4 @@
 from fastapi import FastAPI
-from fastapi.templating import Jinja2Templates
 from app import api
 from app.db.connection import engine
 from app.db.models import Task
