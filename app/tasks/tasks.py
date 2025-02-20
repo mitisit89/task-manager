@@ -28,7 +28,7 @@ async def add(task_id, params: dict[str, int]) -> dict[str, int]:
 async def mult(task_id, params: dict[str, int]) -> dict[str, int]:
     a = params.get("a", 1)
     b = params.get("b", 1)
-    total_time = 60
+    total_time = 30
     step = 0.5
     elapsed = 0
     while elapsed < total_time:
@@ -40,7 +40,7 @@ async def mult(task_id, params: dict[str, int]) -> dict[str, int]:
 
 async def rev(task_id, params: dict[str, str]) -> dict[str, str]:
     text = params.get("text", "")
-    total_time = 60
+    total_time = 10
     step = 0.5
     elapsed = 0
     while elapsed < total_time:
