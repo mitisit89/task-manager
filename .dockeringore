@@ -1,0 +1,10 @@
+*.db
+__pycache__/
+.venv
+*.toml
+*.md
+.lock
+tests/
+.git
+.gitignore
+.pytest_cache

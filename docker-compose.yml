@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   api:
     build: .
@@ -7,26 +6,26 @@ services:
       - "8000:8000"
     depends_on:
       - postgres
-      - rabbitmq
       - redis
+      - rabbitmq
+    restart:
+            always
     environment:
       - DATABASE_URL=postgresql+asyncpg://user:password@postgres:5432/tasks_db
-      - RABBITMQ_URL=amqp://guest:guest@rabbitmq/
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq-task-manager:5672
       - REDIS_URL=redis://redis
-
   worker:
     build: .
     container_name: worker
     command: ["python", "-m","app.worker.main"]
     depends_on:
-      - postgres
-      - rabbitmq
-      - redis
+    - api
+    restart:
+            always
     environment:
       - DATABASE_URL=postgresql+asyncpg://user:password@postgres:5432/tasks_db
-      - RABBITMQ_URL=amqp://guest:guest@rabbitmq/
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq-task-manager:5672
       - REDIS_URL=redis://redis
-
   postgres:
     image: postgres:17-alpine
     container_name: postgres
@@ -46,7 +45,12 @@ services:
 
   rabbitmq:
     image: rabbitmq:3-management
-    container_name: rabbitmq
+    container_name: rabbitmq-task-manager
+    healthcheck:
+          test: rabbitmq-diagnostics -q ping
+          interval: 30s
+          timeout: 30s
+          retries: 3
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -56,19 +60,6 @@ services:
     container_name: redis
     ports:
       - "6379:6379"
-
-  tests:
-      build: .
-      container_name: tests
-      command: ["pytest", "--maxfail=1", "--disable-warnings", "-q"]
-      depends_on:
-        - postgres
-        - rabbitmq
-        - redis
-      environment:
-        - DATABASE_URL=postgresql+asyncpg://user:password@postgres:5432/tasks_db
-        - RABBITMQ_URL=amqp://guest:guest@rabbitmq/
-        - REDIS_URL=redis://redis
 
 volumes:
   pgdata:
