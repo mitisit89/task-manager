@@ -6,14 +6,14 @@ import redis.asyncio as redis
 from app.db.connection import async_session
 from app.db.models import Task
 from app.tasks import tasks as task_functions
-from app.db.enums import TaskStatus
+from app.db.enums import TaskStatus, TaskType
 from app.settings import settings
+from datetime import datetime
 
-
-TASK_FUNCTIONS: dict[str, Callable[Any, Any]] = {
-    "add": task_functions.add,
-    "mult": task_functions.mult,
-    "rev": task_functions.rev,
+TASK_FUNCTIONS: dict[TaskType, Callable[Any, Any]] = {
+    TaskType.ADD: task_functions.add,
+    TaskType.MULTIPLY: task_functions.mult,
+    TaskType.REVERSE: task_functions.rev,
 }
 
 
@@ -26,6 +26,7 @@ async def process_message(message: IncomingMessage) -> None:
             if not task:
                 return
             task.status = TaskStatus.IN_PROGRESS
+            task.started_at = datetime.utcnow()
             await session.commit()
             await session.refresh(task)
             try:
@@ -34,16 +35,18 @@ async def process_message(message: IncomingMessage) -> None:
                     raise ValueError("Unknown task type")
                 print(task.payload)
                 result = await fn(task_id, json.loads(task.payload))
-                print("upal")
-                # cache = await redis.from_url("redis://redis:6379")
-                # await cache.set(f"task:{task_id}", json.dumps(result))
+                cache = await redis.from_url(settings.REDIS_URL)
+                await cache.set(f"task:{task_id}", json.dumps(result))
                 task.result = json.dumps(result)
                 task.status = TaskStatus.COMPLETED
+                task.finished_at = datetime.utcnow()
             except asyncio.CancelledError as ce:
                 task.error = str(ce)
+                task.finished_at = datetime.utcnow()
             except Exception as e:
                 task.error = str(e) + " --error in update task"
                 task.status = TaskStatus.FAILED
+                task.finished_at = datetime.utcnow()
             finally:
                 await session.commit()
 
