@@ -22,5 +22,5 @@ docker-compose up --build
 1. Установите зависимостости с помощью uv
 ```sh uv venv && uv sync && source .venv/bin/activate```
 2. Установите rabbitmq,redis с помошью пакетного менежера вашего дистрибутива
-3. Для запуска сервера ```sh fastapi dev main:app```
+3. Для запуска сервера ```sh fastapi dev```
 4. Для запуска воркера ```python -m app.worker.main```
