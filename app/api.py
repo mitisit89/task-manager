@@ -20,7 +20,7 @@ templates = Jinja2Templates(directory="templates")
 @router.post("/publish-task/", response_model=TaskInfo, status_code=202)
 async def create_task(task: TaskCreate) -> TaskInfo:
     """
-    avaliable task types: add, multiply, reverse
+    available task types: add, multiply, reverse
     for add and mul task payload must be {"a": int, "b": int}
     for rev task payload must be {"text": str}
     """
@@ -107,7 +107,7 @@ async def cancel_task(task_id: int):
 
 
 @router.get("/", response_class=HTMLResponse)
-async def daashboard(request: Request):
+async def dashboard(request: Request):
     try:
         async with async_session() as session:
             result = await session.execute(select(Task))
